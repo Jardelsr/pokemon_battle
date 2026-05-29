@@ -1,0 +1,63 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: pokemon_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      - vendor_cache:/var/www/html/vendor
+    networks:
+      - pokemon_network
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - APP_ENV=local
+
+  nginx:
+    image: nginx:alpine
+    container_name: pokemon_nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - pokemon_network
+    depends_on:
+      - app
+
+  db:
+    image: postgres:16-alpine
+    container_name: pokemon_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pokemon_battle
+      POSTGRES_USER: pokemon
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pokemon_network
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pokemon -d pokemon_battle"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  postgres_data:
+    driver: local
+  vendor_cache:
+    driver: local
+
+networks:
+  pokemon_network:
+    driver: bridge

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\DTOs;
 
-readonly class PokemonDTO
+class PokemonDTO
 {
     public function __construct(
-        public string $name,
-        public int    $hp,
-        public string $spriteUrl,
-        public array  $types,
-        public array  $stats,
+        public readonly string $name,
+        public readonly int    $hp,
+        public readonly string $spriteUrl,
+        public readonly array  $types,
+        public readonly array  $stats,
     ) {
     }
 

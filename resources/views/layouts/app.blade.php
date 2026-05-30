@@ -10,13 +10,16 @@
             theme: {
                 extend: {
                     animation: {
-                        'bounce-slow': 'bounce 2s infinite',
-                        'pulse-fast':  'pulse 1s infinite',
-                        'fade-in':     'fadeIn 0.5s ease-in-out',
+                        'fade-in':  'fadeIn 0.4s ease-out both',
+                        'slide-up': 'slideUp 0.45s ease-out both',
                     },
                     keyframes: {
                         fadeIn: {
-                            '0%':   { opacity: '0', transform: 'translateY(16px)' },
+                            '0%':   { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%':   { opacity: '0', transform: 'translateY(20px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
                         },
                     },
@@ -25,52 +28,61 @@
         }
     </script>
     <style>
-        /* Pokéball spinner for loading state */
+        /* ── Pokéball spinner ───────────────────────────────────── */
         .pokeball {
-            width: 24px; height: 24px;
+            display: inline-block;
+            width: 20px; height: 20px;
             border-radius: 50%;
-            background: linear-gradient(to bottom, #ef4444 50%, #fff 50%);
-            border: 3px solid #1f2937;
+            background: linear-gradient(to bottom, #ef4444 50%, #f9fafb 50%);
+            border: 3px solid #030712;
             position: relative;
-            animation: spin 1s linear infinite;
+            animation: pokeball-spin 0.7s linear infinite;
+            flex-shrink: 0;
         }
         .pokeball::after {
             content: '';
             position: absolute;
-            width: 8px; height: 8px;
-            background: #fff;
-            border: 3px solid #1f2937;
+            width: 6px; height: 6px;
+            background: #f9fafb;
+            border: 2px solid #030712;
             border-radius: 50%;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pokeball-spin { to { transform: rotate(360deg); } }
+
+        /* ── Stat bar smooth animation ──────────────────────────── */
+        .stat-bar {
+            transition: width 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+        }
     </style>
     @yield('head')
 </head>
-<body class="h-full bg-gray-900 text-gray-100 antialiased">
+<body class="min-h-full bg-gray-950 text-gray-100 antialiased">
 
     {{-- ── Navigation ── --}}
-    <nav class="bg-gray-800 border-b border-gray-700 shadow-lg">
-        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-            <span class="text-2xl select-none">&#x26BF;</span>
+    <header class="bg-gray-900 border-b border-gray-800 shadow-lg sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
+            <span class="text-2xl leading-none select-none" aria-hidden="true">⚔️</span>
             <a href="{{ route('battle.index') }}"
-               class="text-xl font-bold tracking-tight text-white hover:text-yellow-400 transition-colors">
-                Pokemon Battle
+               class="font-extrabold tracking-tight text-lg hover:opacity-80 transition-opacity">
+                <span class="text-yellow-400">Pokemon</span><span class="text-white"> Battle</span>
             </a>
-            <span class="ml-auto text-xs text-gray-500">Powered by PokéAPI</span>
+            <span class="ml-auto text-xs text-gray-700 hidden sm:block">Powered by PokéAPI</span>
         </div>
-    </nav>
+    </header>
 
     {{-- ── Main content ── --}}
-    <main class="max-w-5xl mx-auto px-4 py-10">
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-10 min-w-0">
         @yield('content')
     </main>
 
     {{-- ── Footer ── --}}
-    <footer class="mt-16 border-t border-gray-800 py-6 text-center text-xs text-gray-600">
+    <footer class="border-t border-gray-800/60 py-6 text-center text-xs text-gray-700">
         Pokemon Battle Simulator &mdash; ateliware challenge
     </footer>
+
+    @yield('scripts')
 
 </body>
 </html>

@@ -36,7 +36,6 @@ COPY composer.json composer.lock ./
 
 # Install PHP dependencies without running post-install scripts (artisan not available yet)
 RUN composer install \
-    --no-dev \
     --no-interaction \
     --no-progress \
     --no-scripts \
@@ -47,9 +46,12 @@ COPY . .
 
 # Re-run autoloader dump now that artisan and full app are present
 RUN composer dump-autoload \
-    --no-dev \
     --optimize \
     --no-interaction
+
+# Copy and configure the entrypoint script
+COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Set correct ownership and permissions for Laravel storage and cache
 RUN chown -R www-data:www-data /var/www/html \
@@ -58,4 +60,4 @@ RUN chown -R www-data:www-data /var/www/html \
 
 EXPOSE 9000
 
-CMD ["php-fpm"]
+ENTRYPOINT ["entrypoint.sh"]

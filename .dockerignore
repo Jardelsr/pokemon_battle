@@ -1,0 +1,29 @@
+# Git
+.git
+.gitattributes
+.gitignore
+
+# Local vendor (Docker installs its own via composer)
+vendor/
+
+# Bootstrap cache (may contain dev-only service providers like laravel/sail)
+bootstrap/cache/*.php
+
+# Node
+node_modules/
+
+# Tests
+tests/
+
+# Local env overrides (container uses its own env)
+.env.*.local
+
+# Editor / IDE
+.editorconfig
+.idea/
+.vscode/
+
+# Docker config files (not needed inside the image)
+docker/php/Dockerfile
+docker-compose*.yml
+.dockerignore

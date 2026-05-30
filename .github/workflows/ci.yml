@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────
+  # Job: tests
+  # Roda a suite completa do PHPUnit contra PostgreSQL 16 e reporta coverage.
+  # ──────────────────────────────────────────────────────────────────────────
+  tests:
+    name: Tests (PHP 8.3 / PostgreSQL 16)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB:       pokemon_battle_test
+          POSTGRES_USER:     pokemon
+          POSTGRES_PASSWORD: secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      # a. Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # b. PHP 8.3 + extensões necessárias + pcov para coverage ──────────────
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, pgsql, zip, bcmath, gd
+          coverage: pcov
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # c. Cache de dependências Composer (chave baseada no composer.lock) ───
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      # d. Instala dependências ───────────────────────────────────────────────
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      # e. Copia .env ─────────────────────────────────────────────────────────
+      - name: Copy .env
+        run: cp .env.example .env
+
+      # f. Sobrescreve variáveis de banco para o serviço postgres do CI ───────
+      #    Variáveis exportadas para $GITHUB_ENV têm precedência sobre o .env
+      #    (Laravel respeita $_SERVER/$_ENV antes de carregar o arquivo .env).
+      - name: Set test database environment variables
+        run: |
+          echo "DB_CONNECTION=pgsql"             >> "$GITHUB_ENV"
+          echo "DB_HOST=127.0.0.1"               >> "$GITHUB_ENV"
+          echo "DB_PORT=5432"                    >> "$GITHUB_ENV"
+          echo "DB_DATABASE=pokemon_battle_test" >> "$GITHUB_ENV"
+          echo "DB_USERNAME=pokemon"             >> "$GITHUB_ENV"
+          echo "DB_PASSWORD=secret"              >> "$GITHUB_ENV"
+
+      # g. Gera APP_KEY ───────────────────────────────────────────────────────
+      - name: Generate application key
+        run: php artisan key:generate
+
+      # h. Executa migrations ─────────────────────────────────────────────────
+      - name: Run database migrations
+        run: php artisan migrate --force
+
+      # i. Roda testes com relatório de coverage no stdout ───────────────────
+      - name: Run tests with coverage
+        run: php artisan test --coverage-text
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Job: lint
+  # Verifica a sintaxe PHP de todos os arquivos em app/ e tests/.
+  # Roda em paralelo com `tests` para feedback mais rápido.
+  # ──────────────────────────────────────────────────────────────────────────
+  lint:
+    name: PHP Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check PHP syntax (app/ and tests/)
+        run: find app tests -name "*.php" -exec php -l {} \;

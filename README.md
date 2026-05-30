@@ -20,7 +20,7 @@ Desafio técnico ateliware — simulador de batalha Pokémon usando a PokéAPI.
 
 ```bash
 # 1. Clone o repositório
-git clone <url-do-repo>
+git clone https://github.com/Jardelsr/pokemon_battle.git
 cd pokemon_battle
 
 # 2. Copie o arquivo de variáveis de ambiente

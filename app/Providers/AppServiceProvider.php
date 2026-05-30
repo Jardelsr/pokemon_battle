@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\BattleService;
 use App\Services\PokeApiService;
 use Illuminate\Support\ServiceProvider;
 
@@ -13,6 +14,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(PokeApiService::class);
+        $this->app->singleton(BattleService::class);
     }
 
     /**

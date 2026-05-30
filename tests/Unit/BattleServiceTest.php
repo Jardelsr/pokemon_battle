@@ -7,6 +7,7 @@ namespace Tests\Unit;
 use App\DTOs\BattleResultDTO;
 use App\DTOs\PokemonDTO;
 use App\Exceptions\PokemonNotFoundException;
+use App\Exceptions\PokemonValidationException;
 use App\Models\Battle;
 use App\Services\BattleService;
 use App\Services\PokeApiService;
@@ -111,7 +112,7 @@ class BattleServiceTest extends TestCase
     }
 
     /** @test */
-    public function test_battle_propagates_pokemon_not_found_exception(): void
+    public function test_battle_throws_validation_exception_when_first_pokemon_not_found(): void
     {
         $this->pokeApiMock
             ->shouldReceive('getPokemon')
@@ -119,10 +120,44 @@ class BattleServiceTest extends TestCase
             ->once()
             ->andThrow(new PokemonNotFoundException('fakemon'));
 
-        $this->expectException(PokemonNotFoundException::class);
+        $this->pokeApiMock
+            ->shouldReceive('getPokemon')
+            ->with('pikachu')
+            ->once()
+            ->andReturn($this->makePokemonDTO('pikachu', 35));
+
+        $this->expectException(PokemonValidationException::class);
         $this->expectExceptionMessage("Pokémon 'fakemon' não encontrado.");
 
         $this->service->battle('fakemon', 'pikachu');
+    }
+
+    /** @test */
+    public function test_battle_collects_both_errors_when_both_pokemons_not_found(): void
+    {
+        $this->pokeApiMock
+            ->shouldReceive('getPokemon')
+            ->with('fakemon1')
+            ->once()
+            ->andThrow(new PokemonNotFoundException('fakemon1'));
+
+        $this->pokeApiMock
+            ->shouldReceive('getPokemon')
+            ->with('fakemon2')
+            ->once()
+            ->andThrow(new PokemonNotFoundException('fakemon2'));
+
+        $this->expectException(PokemonValidationException::class);
+
+        try {
+            $this->service->battle('fakemon1', 'fakemon2');
+        } catch (PokemonValidationException $e) {
+            $messages = $e->getMessages();
+            $this->assertCount(2, $messages);
+            $this->assertStringContainsString('fakemon1', $messages[0]);
+            $this->assertStringContainsString('fakemon2', $messages[1]);
+            throw $e;
+        }
     }
 
     /** @test */

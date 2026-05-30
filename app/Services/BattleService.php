@@ -6,6 +6,8 @@ namespace App\Services;
 
 use App\DTOs\BattleResultDTO;
 use App\DTOs\PokemonDTO;
+use App\Exceptions\PokemonNotFoundException;
+use App\Exceptions\PokemonValidationException;
 use App\Models\Battle;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -25,18 +27,36 @@ class BattleService
      *  - HP pokemonTwo > HP pokemonOne → 'pokemon_two_wins'
      *  - HPs iguais                   → 'draw' (winnerName = null)
      *
-     * Exceptions lançadas pelo PokeApiService propagam sem serem capturadas aqui.
+     * Ambos os Pokémon são buscados independentemente para que todos os erros de
+     * "não encontrado" sejam coletados e reportados de uma só vez.
      *
      * @param  string  $pokemonOneName  Nome do primeiro Pokémon (ex: "pikachu").
      * @param  string  $pokemonTwoName  Nome do segundo Pokémon (ex: "raichu").
      *
-     * @throws \App\Exceptions\PokemonNotFoundException  Se qualquer um dos nomes for inválido.
-     * @throws \App\Exceptions\PokeApiException          Em falha de rede ou resposta inválida.
+     * @throws \App\Exceptions\PokemonValidationException  Se um ou ambos os nomes forem inválidos.
+     * @throws \App\Exceptions\PokeApiException            Em falha de rede ou resposta inválida.
      */
     public function battle(string $pokemonOneName, string $pokemonTwoName): BattleResultDTO
     {
-        $pokemonOne = $this->pokeApiService->getPokemon($pokemonOneName);
-        $pokemonTwo = $this->pokeApiService->getPokemon($pokemonTwoName);
+        $errors     = [];
+        $pokemonOne = null;
+        $pokemonTwo = null;
+
+        try {
+            $pokemonOne = $this->pokeApiService->getPokemon($pokemonOneName);
+        } catch (PokemonNotFoundException $e) {
+            $errors[] = $e->getMessage();
+        }
+
+        try {
+            $pokemonTwo = $this->pokeApiService->getPokemon($pokemonTwoName);
+        } catch (PokemonNotFoundException $e) {
+            $errors[] = $e->getMessage();
+        }
+
+        if (!empty($errors)) {
+            throw new PokemonValidationException($errors);
+        }
 
         [$result, $winnerName] = $this->determineResult($pokemonOne, $pokemonTwo);
 

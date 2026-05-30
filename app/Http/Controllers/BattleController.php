@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Exceptions\PokeApiException;
-use App\Exceptions\PokemonNotFoundException;
+use App\Exceptions\PokemonValidationException;
 use App\Services\BattleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,10 +42,10 @@ class BattleController extends Controller
                 $validated['pokemon_one'],
                 $validated['pokemon_two'],
             );
-        } catch (PokemonNotFoundException $e) {
+        } catch (PokemonValidationException $e) {
             return back()
                 ->withInput()
-                ->withErrors(['battle' => $e->getMessage()]);
+                ->withErrors(['battle' => $e->getMessages()]);
         } catch (PokeApiException $e) {
             return back()
                 ->withInput()

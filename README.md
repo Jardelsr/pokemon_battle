@@ -112,6 +112,43 @@ Resultado esperado: **22 testes, 83 assertions**.
 
 Todos os testes usam `Http::fake()` — **nenhuma chamada real à PokéAPI**.
 
+## Melhorias futuras
+
+Ideias para evoluir o projeto além do escopo atual:
+
+### Batalhas
+
+- **Regras configuráveis** — menu para escolher o stat de comparação (Attack, Speed, Defense, etc.) em vez de apenas HP, permitindo diferentes modalidades de batalha.
+- **Simulação de IVs, EVs e Nature** — adicionar multiplicadores que simulam treinamento competitivo (Individual Values, Effort Values, Nature) para alterar os stats base antes da comparação.
+- **Batalhas por time** — selecionar 3 ou 6 Pokémon por jogador e simular turnos com vantagem de tipo (type chart), não apenas stat bruto.
+- **Animação de batalha** — tela de batalha com sprites animados, barras de HP decaindo e log de turnos.
+
+### Busca e seleção de Pokémon
+
+- **Autocomplete com fuzzy search** — ao digitar no input, sugerir nomes próximos (ex: digitar "pika" sugere "pikachu") e corrigir erros de digitação com distância Levenshtein.
+- **Modal com galeria visual** — modal com grid de sprites, filtrável por tipo (Fire, Water, Grass...) e ordenável por stat (maior HP, maior Attack), para selecionar Pokémon sem digitar o nome.
+- **Busca multilíngue** — aceitar nomes em francês ("carapuce" → Squirtle), alemão ("glumanda" → Charmander), japonês, etc., consultando o endpoint `/pokemon-species/{id}` da PokéAPI que devolve `names[]` em todos os idiomas.
+
+### Experiência do usuário
+
+- **Modo escuro/claro** — toggle para alternar entre o tema dark atual e um tema claro.
+- **Compartilhamento de resultado** — gerar link ou imagem com o resultado da batalha para compartilhar.
+- **PWA (Progressive Web App)** — service worker, manifesto e ícones para instalar no celular como app nativo.
+- **Efeitos sonoros** — som ao clicar em Batalhar, som de vitória/derrota/empate.
+
+### Infraestrutura e dados
+
+- **Cache de respostas da PokéAPI** — usar Redis ou cache em arquivo para evitar chamadas repetidas ao mesmo Pokémon (ex: Pikachu é consultado 10 vezes, mas a API só é chamada 1 vez). Reduz latência e respeita rate limit.
+- **Paginação do histórico** — paginar ou usar infinite scroll no histórico de batalhas quando houver muitos registros.
+- **Filtros do histórico** — filtrar por data, por Pokémon específico ou por resultado (vitória/derrota/empate).
+- **Ranking de Pokémon** — página com os Pokémon mais vencedores, maiores HPs, etc., baseado nos dados acumulados de batalhas.
+
+### Testes e CI/CD
+
+- **Testes de mutação** — usar Infection PHP para medir qualidade real dos testes (mata mutantes ou não?).
+- **Laravel Pint ou PHP-CS-Fixer** — adicionar step de code style check no pipeline de CI.
+- **Larastan (PHPStan para Laravel)** — análise estática para detectar erros de tipo antes de rodar.
+
 ## Variáveis de ambiente relevantes
 
 ```env
